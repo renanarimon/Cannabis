@@ -57,6 +57,7 @@ def findBrown(img_hsv):
     lower_values = np.array([6, 63, 0])
     upper_values = np.array([23, 255, 81])
 
+
     # Create the HSV mask
     mask = cv2.inRange(img_hsv, lower_values, upper_values)
 
@@ -76,7 +77,7 @@ def filterMask(masked_img):
     kernelSize = 3
 
     structuringElement = cv2.getStructuringElement(cv2.MORPH_RECT, (kernelSize, kernelSize))
-    iterations = 10
+    iterations = 5
 
     mask = cv2.morphologyEx(masked_img, cv2.MORPH_DILATE, structuringElement, None, None, iterations,
                             cv2.BORDER_REFLECT101)
@@ -87,7 +88,7 @@ def filterMask(masked_img):
 
 if __name__ == '__main__':
     print("main")
-    img_path = "75/rgb_0.JPG"
+    img_path = "2/rgb_0.JPG"
     img = cv2.imread(img_path, cv2.COLOR_BGR2RGB)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     plt.imshow(img)
@@ -100,3 +101,40 @@ if __name__ == '__main__':
     filter_img = filterMask(masked_img)
     plt.imshow(filter_img)
     plt.show()
+
+    a = np.where(filter_img == 255)
+    s = a[0].size
+    print(s)
+
+    # sumMold = 0
+    # sumNotMold = 0
+    # for i in range(2, 93):
+    #
+    #     img = cv2.imread(str(i) + '\\rgb_0.JPG', cv2.COLOR_BGR2RGB)
+    #     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    #     masked_img = findBrown(img_hsv)
+    #     filter_img = filterMask(masked_img)
+    #     a = np.where(filter_img == 255)
+    #     s = a[0].size
+    #
+    #     if 7<=i<=75:
+    #         sumNotMold += s
+    #     else:
+    #         sumMold +=s
+    #
+    #     if s > 100:
+    #         print("img ", i , "mold")
+    #         print(s)
+    #     else:
+    #         print("img ", i, "is no mold")
+    #         print(s)
+    #     plt.imshow(filter_img)
+    #     plt.title("folder " + str(i))
+    #     plt.show()
+    #
+    # avgMold = sumMold // 23
+    # avgNotMold = sumNotMold // 68
+    #
+    # print("avgMold: ", avgMold)
+    # print("avgNotMold: ", avgNotMold)
+
