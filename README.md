@@ -14,3 +14,6 @@
 
 ![image](https://user-images.githubusercontent.com/77155986/170452084-4ff181c6-bc20-47c1-9882-da7b7f1e2bc7.png)
 
+4. filtered img
+
+![image](https://user-images.githubusercontent.com/77155986/170454600-ff713eee-282f-4dd3-841a-57589fd488b3.png)
