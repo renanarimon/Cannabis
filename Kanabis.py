@@ -2,7 +2,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def hist(img):
+    """
+    make color distribution histogram
+    :param img:
+    :return:
+    """
     h, s, v = cv2.split(img)
     hist_h = cv2.calcHist([h], [0], None, [256], [0, 256])
     hist_s = cv2.calcHist([s], [0], None, [256], [0, 256])
@@ -17,18 +23,80 @@ def hist(img):
     plt.show()
 
 
+def areaFilter(minArea, inputImage):
+    """
+    filter img by color area
+    :param minArea:
+    :param inputImage:
+    :return:
+    """
+    # Perform an area filter on the binary blobs:
+    componentsNumber, labeledImage, componentStats, componentCentroids = \
+        cv2.connectedComponentsWithStats(inputImage, connectivity=4)
+
+    # Get the indices/labels of the remaining components based on the area stat
+    # (skip the background component at index 0)
+    remainingComponentLabels = [i for i in range(1, componentsNumber) if componentStats[i][4] >= minArea]
+
+    # Filter the labeled pixels based on the remaining labels,
+    # assign pixel intensity to 255 (uint8) for the remaining pixels
+    filteredImage = np.where(np.isin(labeledImage, remainingComponentLabels) == True, 255, 0).astype('uint8')
+
+    return filteredImage
+
+
+def findBrown(img_hsv):
+    """
+    mask img:
+    if in brown range -> 255
+    else -> 0
+    :param img_hsv:
+    :return:
+    """
+    # brown color
+    lower_values = np.array([6, 63, 0])
+    upper_values = np.array([23, 255, 81])
+
+    # Create the HSV mask
+    mask = cv2.inRange(img_hsv, lower_values, upper_values)
+
+    # Run a minimum area filter:
+    minArea = 800
+    mask_img = areaFilter(minArea, mask)
+    return mask_img
+
+
+def filterMask(masked_img):
+    """
+    filter the masked img to ignore layout
+    :param masked_img:
+    :return:
+    """
+    # Pre-process mask:
+    kernelSize = 3
+
+    structuringElement = cv2.getStructuringElement(cv2.MORPH_RECT, (kernelSize, kernelSize))
+    iterations = 10
+
+    mask = cv2.morphologyEx(masked_img, cv2.MORPH_DILATE, structuringElement, None, None, iterations,
+                            cv2.BORDER_REFLECT101)
+    mask = cv2.morphologyEx(masked_img, cv2.MORPH_ERODE, structuringElement, None, None, iterations,
+                            cv2.BORDER_REFLECT101)
+    return mask
 
 
 if __name__ == '__main__':
     print("main")
-    img_path = "2/530_0.JPG"
+    img_path = "75/rgb_0.JPG"
     img = cv2.imread(img_path, cv2.COLOR_BGR2RGB)
-    # img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    hist(img)
-    r,g,b = cv2.split(img)
-    plt.imshow(g)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    plt.imshow(img)
     plt.show()
-
-    print(img.shape)
-
-
+    plt.imshow(img_hsv)
+    plt.show()
+    masked_img = findBrown(img_hsv)
+    plt.imshow(masked_img)
+    plt.show()
+    filter_img = filterMask(masked_img)
+    plt.imshow(filter_img)
+    plt.show()
