@@ -1,7 +1,22 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, confusion_matrix
+import seaborn as sns
 
+def plot_confusion(cf_matrix):
+    ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
+
+    ax.set_title('Seaborn Confusion Matrix with labels\n\n')
+    ax.set_xlabel('\nPredicted Values')
+    ax.set_ylabel('Actual Values ')
+
+    ## Ticket labels - List must be in alphabetical order
+    ax.xaxis.set_ticklabels(['False','True'])
+    ax.yaxis.set_ticklabels(['False','True'])
+
+    ## Display the visualization of the Confusion Matrix.
+    plt.show()
 
 def hist(img):
     """
@@ -54,9 +69,29 @@ def findBrown(img_hsv):
     :return:
     """
     # brown color
-    lower_values = np.array([6, 63, 0])
-    upper_values = np.array([23, 255, 81])
+    lower_values = np.array([10, 112, 99])
+    upper_values = np.array([16, 194, 131])
 
+    # Create the HSV mask
+    mask = cv2.inRange(img_hsv, lower_values, upper_values)
+
+    # Run a minimum area filter:
+    minArea = 800
+    mask_img = areaFilter(minArea, mask)
+    return mask_img
+
+
+def findWhite(img_hsv):
+    """
+    mask img:
+    if in white range -> 255
+    else -> 0
+    :param img_hsv:
+    :return:
+    """
+    # brown color
+    lower_values = np.array([17, 69, 110])
+    upper_values = np.array([27, 138, 170])
 
     # Create the HSV mask
     mask = cv2.inRange(img_hsv, lower_values, upper_values)
@@ -86,9 +121,13 @@ def filterMask(masked_img):
     return mask
 
 
-if __name__ == '__main__':
-    print("main")
-    img_path = "2/rgb_0.JPG"
+def minMax_hsv(img_hsv):
+    h, s, v = cv2.split(img_hsv)
+    print("min h: ", np.min(h), ", s: ", np.min(s), ", v: ", np.min(v))
+    print("max h: ", np.max(h), ", s: ", np.max(s), ", v: ", np.max(v))
+
+
+def imgShow(img_path):
     img = cv2.imread(img_path, cv2.COLOR_BGR2RGB)
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     plt.imshow(img)
@@ -101,40 +140,56 @@ if __name__ == '__main__':
     filter_img = filterMask(masked_img)
     plt.imshow(filter_img)
     plt.show()
+    arr = np.where(filter_img == 255)
+    si = arr[0].size
 
-    a = np.where(filter_img == 255)
-    s = a[0].size
-    print(s)
+    print(si)
 
-    # sumMold = 0
-    # sumNotMold = 0
-    # for i in range(2, 93):
+
+if __name__ == '__main__':
+    print("main")
+    # img_path_color = "4/white.jpg"
+    # img_path = "22/rgb_0.JPG"
+    # img = cv2.imread(img_path_color, cv2.COLOR_BGR2RGB)
+    # img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     #
+    # imgShow(img_path)
+    y_true = np.ones(92)
+    y_true[0] = 0
+    for i in range(7, 76):
+        y_true[i] = 0
+
+    y_pred = np.zeros(92)
+    for i in range(2, 93):
+        img = cv2.imread(str(i) + '\\rgb_0.JPG', cv2.COLOR_BGR2RGB)
+        img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        masked_img = findBrown(img_hsv)
+        filter_img = filterMask(masked_img)
+        a = np.where(filter_img == 255)
+        s = a[0].size
+        if s > 300:
+            y_pred[i - 1] = 1
+
+    print(y_true)
+    print(y_pred)
+
+    acc = accuracy_score(y_true, y_pred)
+    print("accuracy: ",acc)
+
+    con = confusion_matrix(y_true,y_pred)
+    plot_confusion(con)
+
+
+    # f = open("predict.txt", "a")
+    # for i in range(2, 93):
     #     img = cv2.imread(str(i) + '\\rgb_0.JPG', cv2.COLOR_BGR2RGB)
     #     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     #     masked_img = findBrown(img_hsv)
     #     filter_img = filterMask(masked_img)
     #     a = np.where(filter_img == 255)
     #     s = a[0].size
-    #
-    #     if 7<=i<=75:
-    #         sumNotMold += s
+    #     if s > 300:
+    #         f.write("img "+ str(i)+ " --> 1\n")
     #     else:
-    #         sumMold +=s
-    #
-    #     if s > 100:
-    #         print("img ", i , "mold")
-    #         print(s)
-    #     else:
-    #         print("img ", i, "is no mold")
-    #         print(s)
-    #     plt.imshow(filter_img)
-    #     plt.title("folder " + str(i))
-    #     plt.show()
-    #
-    # avgMold = sumMold // 23
-    # avgNotMold = sumNotMold // 68
-    #
-    # print("avgMold: ", avgMold)
-    # print("avgNotMold: ", avgNotMold)
-
+    #         f.write("img " + str(i) + " --> 0\n")
+    # f.close()
